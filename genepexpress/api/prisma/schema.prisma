@@ -1,0 +1,95 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Genep'express — Prisma Schema
+// Modèles : User, GenepeExpress, Product, Order
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+enum Role {
+  GENEP  // Ravitailleur terrain
+  ADMIN  // Gestionnaire station
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  role         Role           @default(GENEP)
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  agent        GenepeExpress?
+}
+
+// ── Ravitailleur ──────────────────────────────────────────────────────────────
+
+model GenepeExpress {
+  id        String  @id @default(uuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id])
+
+  name      String
+  lat       Float   @default(0)
+  lng       Float   @default(0)
+  altitude  Float   @default(0)  // mètres — pour le calcul de distance 3D
+  available Boolean @default(false)
+  fcmToken  String?              // Firebase push token — nullable
+
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+// ── Catalogue ─────────────────────────────────────────────────────────────────
+
+model Product {
+  id        String   @id @default(uuid())
+  name      String
+  price     Float                        // en euros
+  imageUrl  String?
+  available Boolean  @default(true)
+  stock     Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ── Commandes ─────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  pending   // En attente d'acceptation
+  accepted  // Ravitailleur a accepté
+  en_route  // En route vers le point RDV
+  delivered // Livré
+  cancelled // Annulé (refus ou timeout)
+}
+
+model Order {
+  id             String      @id @default(uuid())
+  status         OrderStatus @default(pending)
+
+  // [{productId, name, qty, price}]
+  items          Json
+
+  // Point de rendez-vous choisi par le client (tap sur la carte)
+  meetLat        Float
+  meetLng        Float
+
+  // Token FCM du client pour les notifications de changement de statut
+  clientFcmToken String?
+
+  genepId        String
+  genep          GenepeExpress @relation(fields: [genepId], references: [id])
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
