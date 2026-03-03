@@ -33,7 +33,7 @@ Application mobile de ravitaillement sur pistes de ski — localisez les Genep'e
 ### 1. Cloner le repo
 
 ```powershell
-PS> git clone https://github.com/VOTRE_USER/genepexpress.git
+PS> git clone https://github.com/Rezerem/genep-express.git
 PS> cd genepexpress
 ```
 
