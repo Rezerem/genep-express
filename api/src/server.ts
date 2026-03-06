@@ -6,14 +6,15 @@ import jwt from '@fastify/jwt'
 import prismaPlugin from './plugins/prisma.js'
 import redisPlugin from './plugins/redis.js'
 import { healthRoute } from './routes/health.js'
+import { authRoute } from './routes/auth.js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-// Utilisé pour l'augmentation du JWT (B-01)
+// Utilisé pour l'augmentation du JWT (B-01) — authentification Google OAuth
 declare module '@fastify/jwt' {
   interface FastifyJWT {
-    payload: { id: string; role: 'GENEP' | 'ADMIN' }
-    user: { id: string; role: 'GENEP' | 'ADMIN' }
+    payload: { id: string; email: string; role: 'GENEP' | 'ADMIN' }
+    user: { id: string; email: string; role: 'GENEP' | 'ADMIN' }
   }
 }
 
@@ -44,6 +45,7 @@ await fastify.register(redisPlugin)
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 await fastify.register(healthRoute)
+await fastify.register(authRoute)
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 

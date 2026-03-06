@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Genep'express — Prisma Schema
-// Modèles : User, GenepeExpress, Product, Order
+// Modèles : User, GenepeExpress, Order
 // ─────────────────────────────────────────────────────────────────────────────
 
 generator client {
@@ -20,15 +20,15 @@ enum Role {
 }
 
 model User {
-  id           String         @id @default(uuid())
-  email        String         @unique
-  passwordHash String
-  role         Role           @default(GENEP)
-  active       Boolean        @default(true)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id        String         @id @default(uuid())
+  email     String         @unique  // Adresse Gmail (Google OAuth)
+  googleId  String         @unique  // Subject ID Google OAuth
+  role      Role           @default(GENEP)
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
-  agent        GenepeExpress?
+  agent     GenepeExpress?
 }
 
 // ── Ravitailleur ──────────────────────────────────────────────────────────────
@@ -49,20 +49,6 @@ model GenepeExpress {
   orders    Order[]
 }
 
-// ── Catalogue ─────────────────────────────────────────────────────────────────
-
-model Product {
-  id        String   @id @default(uuid())
-  name      String
-  price     Float                        // en euros
-  imageUrl  String?
-  available Boolean  @default(true)
-  stock     Int      @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 // ── Commandes ─────────────────────────────────────────────────────────────────
 
 enum OrderStatus {
@@ -74,22 +60,16 @@ enum OrderStatus {
 }
 
 model Order {
-  id             String      @id @default(uuid())
-  status         OrderStatus @default(pending)
-
-  // [{productId, name, qty, price}]
-  items          Json
+  id      String        @id @default(uuid())
+  status  OrderStatus   @default(pending)
 
   // Point de rendez-vous choisi par le client (tap sur la carte)
-  meetLat        Float
-  meetLng        Float
+  meetLat Float
+  meetLng Float
 
-  // Token FCM du client pour les notifications de changement de statut
-  clientFcmToken String?
+  genepId String
+  genep   GenepeExpress @relation(fields: [genepId], references: [id])
 
-  genepId        String
-  genep          GenepeExpress @relation(fields: [genepId], references: [id])
-
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
