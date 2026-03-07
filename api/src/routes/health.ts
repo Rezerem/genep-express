@@ -1,28 +1,14 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-
-interface HealthReply {
-  status: 'ok' | 'degraded'
-  db: 'ok' | 'error' | 'unknown'
-  redis: 'ok' | 'error' | 'unknown'
-  uptime: number
-}
+import { ZodTypeProvider } from '@marcalexiei/fastify-type-provider-zod'
+import { HealthReplySchema, type HealthReply } from '../types/health/schemas.js'
 
 export async function healthRoute(fastify: FastifyInstance): Promise<void> {
-  fastify.get(
+  fastify.withTypeProvider<ZodTypeProvider>().get(
     '/health',
     {
       schema: {
         response: {
-          200: {
-            type: 'object',
-            properties: {
-              status: { type: 'string', enum: ['ok', 'degraded'] },
-              db:     { type: 'string', enum: ['ok', 'error', 'unknown'] },
-              redis:  { type: 'string', enum: ['ok', 'error', 'unknown'] },
-              uptime: { type: 'number' },
-            },
-            required: ['status', 'db', 'redis', 'uptime'],
-          },
+          200: HealthReplySchema,
         },
       },
     },

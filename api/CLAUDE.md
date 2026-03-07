@@ -14,11 +14,11 @@ Modèle B2B — vendu aux stations. Pas de paiement in-app au MVP.
 - **Cache** : Redis 7 (Docker) — TTL 10s sur positions GPS
 - **Temps réel** : Socket.io 4
 - **Push notifs** : Firebase Admin SDK (FCM)
+- **Validation** : Zod (runtime schema validation + type inference)
 - **Dev runner** : `tsx watch` (pas de compilation en dev)
 - **Build prod** : `tsc` → `dist/`
-
 ## Architecture Dossier
-Voir fichier Architecture.md
+Voir fichier @Architecture.md
 
 ## Modèles Prisma
 - **User** : `id, email (Gmail), googleId (Google OAuth subject), role (GENEP|ADMIN), active`
@@ -26,7 +26,25 @@ Voir fichier Architecture.md
 - **Order** : `id, status (OrderStatus enum), meetLat, meetLng, genepId FK` — une commande = un point GPS ("viens ici")
 
 ## Conventions TypeScript
-Suivre fichier Conventions.md
+Suivre fichier @Conventions.md
+
+## Validation avec Zod
+- **Schémas de requête** : Zod pour valider body, query, params
+- **Extraction de type** : `z.infer<typeof schema>` pour typer les données validées
+- **Erreurs de validation** : capturer avec `.parse()` (throw) ou `.safeParse()` (résultat)
+- **Réponses API** : définir schema Zod pour documenter et typer les réponses
+- **Exemple pattern** :
+  ```typescript
+  const loginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+  });
+
+  type LoginRequest = z.infer<typeof loginSchema>;
+
+  // Dans la route
+  const validated = loginSchema.parse(request.body); // ou safeParse
+  ```
 
 ## WebSocket — events Socket.io (B-03)
 ```

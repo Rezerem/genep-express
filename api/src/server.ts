@@ -2,6 +2,11 @@ import 'dotenv/config'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
+import {
+  ZodTypeProvider,
+  createSerializerCompiler,
+  createValidatorCompiler,
+} from '@marcalexiei/fastify-type-provider-zod'
 
 import prismaPlugin from './plugins/prisma.js'
 import redisPlugin from './plugins/redis.js'
@@ -21,13 +26,15 @@ declare module '@fastify/jwt' {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 const fastify = Fastify({
-  logger: {
-    transport:
+  logger:
       process.env.NODE_ENV !== 'production'
-        ? { target: 'pino-pretty', options: { colorize: true } }
-        : undefined,
-  },
-})
+          ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
+          : true,
+}).withTypeProvider<ZodTypeProvider>()
+
+
+fastify.setValidatorCompiler(createValidatorCompiler())
+fastify.setSerializerCompiler(createSerializerCompiler())
 
 // ── Plugins ───────────────────────────────────────────────────────────────────
 

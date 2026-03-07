@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import type { LoginTicket } from 'google-auth-library'
 import { OAuth2Client } from 'google-auth-library'
 import { verifyJWT } from '../middleware/auth.js'
 
@@ -9,8 +10,6 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 interface GoogleBody {
   idToken: string
 }
-
-
 
 // ── Route ──────────────────────────────────────────────────────────────────────
 
@@ -34,10 +33,12 @@ export async function authRoute(fastify: FastifyInstance): Promise<void> {
     let email: string
 
     try {
-      const ticket = await googleClient.verifyIdToken({
+      const ticket = (await googleClient.verifyIdToken({
         idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      })
+        ...(process.env.GOOGLE_CLIENT_ID !== undefined && {
+          audience: process.env.GOOGLE_CLIENT_ID,
+        }),
+      })) as LoginTicket
       const payload = ticket.getPayload()
       if (!payload?.sub || !payload.email) {
         return reply.code(401).send({ error: 'Invalid Google token' })

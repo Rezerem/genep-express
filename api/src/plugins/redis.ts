@@ -18,9 +18,9 @@ async function redisPlugin(fastify: FastifyInstance): Promise<void> {
   await client.connect()
   fastify.log.info('Redis connected')
 
-  // Le cast est nécessaire car createClient() retourne un type générique
-  // RedisClientType représente le client connecté avec toutes les commandes typées
-  fastify.decorate('redis', client as Parameters<typeof fastify.decorate<'redis'>>[1])
+  // Cast nécessaire : RedisClientType a des génériques complexes
+  // qui ne correspondent pas exactement aux attendus de fastify.decorate
+  fastify.decorate('redis', client as any)
 
   fastify.addHook('onClose', async (): Promise<void> => {
     await client.quit()

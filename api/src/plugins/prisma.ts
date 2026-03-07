@@ -1,13 +1,8 @@
 import fp from 'fastify-plugin'
-import { PrismaClient } from '@prisma/client'
 import type { FastifyInstance } from 'fastify'
+import { prisma } from '../adapter/prisma-adapter.js'
 
 async function prismaPlugin(fastify: FastifyInstance): Promise<void> {
-  const prisma = new PrismaClient({
-    log: process.env.NODE_ENV !== 'production'
-      ? ['query', 'warn', 'error']
-      : ['error'],
-  })
 
   await prisma.$connect()
   fastify.log.info('Prisma connected to PostgreSQL')
