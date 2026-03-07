@@ -92,5 +92,3 @@ npx prisma studio  # Interface visuelle base de données (:5555)
 4. Ouvrir une Pull Request
 
 ---
-
-*Genep'express v0.2 · Mars 2026*

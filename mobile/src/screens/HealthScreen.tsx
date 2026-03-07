@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
+import {ReactElement, useEffect, useState} from 'react'
+import { ActivityIndicator, StyleSheet, Text, View, Pressable } from 'react-native'
+import { useRouter } from 'expo-router'
 import { api } from '@/api/client'
 
 type Status = 'loading' | 'ok' | 'degraded' | 'unreachable'
@@ -10,7 +11,8 @@ interface HealthData {
   uptime: number
 }
 
-export function HealthScreen(): JSX.Element {
+export function HealthScreen(): ReactElement {
+  const router = useRouter()
   const [status, setStatus] = useState<Status>('loading')
   const [data, setData] = useState<HealthData | null>(null)
 
@@ -36,16 +38,26 @@ export function HealthScreen(): JSX.Element {
       {status === 'loading' && <ActivityIndicator size="large" color="#3dd68c" />}
 
       {status !== 'loading' && (
-        <View style={styles.card}>
-          <Row label="API" value={status !== 'unreachable' ? 'ok' : 'unreachable'} />
-          {data && (
-            <>
-              <Row label="PostgreSQL" value={data.db} />
-              <Row label="Redis" value={data.redis} />
-              <Row label="Uptime" value={`${data.uptime}s`} neutral />
-            </>
+        <>
+          <View style={styles.card}>
+            <Row label="API" value={status !== 'unreachable' ? 'ok' : 'unreachable'} />
+            {data && (
+              <>
+                <Row label="PostgreSQL" value={data.db} />
+                <Row label="Redis" value={data.redis} />
+                <Row label="Uptime" value={`${data.uptime}s`} neutral />
+              </>
+            )}
+          </View>
+          {status === 'ok' && (
+            <Pressable
+              style={styles.button}
+              onPress={() => router.push('/client/map')}
+            >
+              <Text style={styles.buttonText}>Go to Map</Text>
+            </Pressable>
           )}
-        </View>
+        </>
       )}
     </View>
   )
@@ -57,7 +69,7 @@ interface RowProps {
   neutral?: boolean
 }
 
-function Row({ label, value, neutral = false }: RowProps): JSX.Element {
+function Row({ label, value, neutral = false }: RowProps): ReactElement {
   const isOk = value === 'ok'
   const color = neutral ? '#888' : isOk ? '#3dd68c' : '#f87171'
 
@@ -116,5 +128,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'monospace',
     fontWeight: '600',
+  },
+  button: {
+    marginTop: 24,
+    backgroundColor: '#3dd68c',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 })
