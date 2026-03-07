@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+
+# Expo
+.expo/
+web-build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/

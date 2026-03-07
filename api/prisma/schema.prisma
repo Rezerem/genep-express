@@ -1,0 +1,75 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Genep'express — Prisma Schema
+// Modèles : User, GenepeExpress, Order
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider   = "prisma-client"
+  output = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+enum Role {
+  GENEP  // Ravitailleur terrain
+  ADMIN  // Gestionnaire station
+}
+
+model User {
+  id        String         @id @default(uuid())
+  email     String         @unique  // Adresse Gmail (Google OAuth)
+  googleId  String         @unique  // Subject ID Google OAuth
+  role      Role           @default(GENEP)
+  active    Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  agent     GenepeExpress?
+}
+
+// ── Ravitailleur ──────────────────────────────────────────────────────────────
+
+model GenepeExpress {
+  id        String  @id @default(uuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id])
+
+  name      String
+  lat       Float   @default(0)
+  lng       Float   @default(0)
+  altitude  Float   @default(0)  // mètres — pour le calcul de distance 3D
+  available Boolean @default(false)
+  fcmToken  String?              // Firebase push token — nullable
+
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+// ── Commandes ─────────────────────────────────────────────────────────────────
+
+enum OrderStatus {
+  pending   // En attente d'acceptation
+  accepted  // Ravitailleur a accepté
+  en_route  // En route vers le point RDV
+  delivered // Livré
+  cancelled // Annulé (refus ou timeout)
+}
+
+model Order {
+  id      String        @id @default(uuid())
+  status  OrderStatus   @default(pending)
+
+  // Point de rendez-vous choisi par le client (tap sur la carte)
+  meetLat Float
+  meetLng Float
+
+  genepId String
+  genep   GenepeExpress @relation(fields: [genepId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

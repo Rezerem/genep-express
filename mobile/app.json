@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Genep'express",
+    "slug": "genepexpress",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "dev.genepexpress.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Genep'express a besoin de ta position pour localiser les ravitailleurs proches.",
+        "NSLocationAlwaysUsageDescription": "Les ravitailleurs partagent leur position en continu pour être localisables sur la carte."
+      }
+    },
+    "android": {
+      "package": "dev.genepexpress.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "FOREGROUND_SERVICE"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Les ravitailleurs partagent leur position en continu."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#3dd68c"
+        }
+      ]
+    ],
+    "scheme": "genepexpress",
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
