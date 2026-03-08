@@ -83,7 +83,7 @@ export default function GenepHomeScreen() {
         const watcher = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.High,
-            timeInterval: 5000, // Mettre à jour toutes les 5 secondes (match broadcast)
+            timeInterval: 10000, // Mettre à jour toutes les 10 secondes (match broadcast)
             distanceInterval: 0, // Peu importe la distance (timeInterval prime)
           },
           (location) => {
@@ -125,7 +125,7 @@ export default function GenepHomeScreen() {
           } catch (err: unknown) {
             console.error('Polling error:', err)
           }
-        }, 5000) // Poll toutes les 5 secondes (match broadcast)
+        }, 10000) // Poll toutes les 10 secondes (match broadcast)
 
         // Store interval pour pouvoir l'arrêter plus tard
         setLocationWatcher({

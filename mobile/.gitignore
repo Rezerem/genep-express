@@ -4,6 +4,7 @@ dist/
 web-build/
 .env.local
 *.log
+app.json
 
 # OS
 .DS_Store
