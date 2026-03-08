@@ -1,5 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify'
-import type { Role } from '@prisma/client'
+import type { Role } from '../generated/prisma/client.js'
 
 export async function verifyJWT(
   request: FastifyRequest,
@@ -19,6 +19,7 @@ export function verifyRole(role: Role) {
   ): Promise<void> {
     if (request.user.role !== role) {
       reply.code(403).send({ error: 'Forbidden' })
+      return
     }
   }
 }

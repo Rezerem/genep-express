@@ -15,6 +15,7 @@ datasource db {
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 enum Role {
+  CLIENT // Skieur/client
   GENEP  // Ravitailleur terrain
   ADMIN  // Gestionnaire station
 }

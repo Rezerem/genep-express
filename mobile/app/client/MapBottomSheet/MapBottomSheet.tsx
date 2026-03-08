@@ -1,7 +1,9 @@
 import React, { ReactElement, useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { router } from 'expo-router'
 import type { AgentPosition } from '@/types'
-import { HealthIndicator } from '@/components/HealthIndicator'
+import { HealthIndicator, OverpassIndicator } from '@/components/HealthIndicator'
+import { useAuthStore } from '@/store/useAuthStore'
 import { mapBottomSheetStyles } from './MapBottomSheet.styles'
 
 interface MapBottomSheetProps {
@@ -34,6 +36,7 @@ export function MapBottomSheet({
   userLocation,
 }: MapBottomSheetProps): ReactElement {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
+  const clearAuth = useAuthStore((s) => s.clearAuth)
 
   const agentsWithDistance = agents
     .map((agent) => ({
@@ -56,11 +59,19 @@ export function MapBottomSheet({
     }
   }
 
+  const handleLogout = () => {
+    void clearAuth()
+    router.replace('/auth/login')
+  }
+
   return (
     <View style={mapBottomSheetStyles.container}>
       <View style={mapBottomSheetStyles.headerContainer}>
         <Text style={mapBottomSheetStyles.header}>Ravitailleurs disponibles</Text>
-        <HealthIndicator />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <HealthIndicator />
+          <OverpassIndicator />
+        </View>
       </View>
       <Text style={mapBottomSheetStyles.agentCount}>
         {agentsWithDistance.length} agent{agentsWithDistance.length !== 1 ? 's' : ''} disponible
@@ -100,6 +111,13 @@ export function MapBottomSheet({
         disabled={!selectedAgentId}
       >
         <Text style={mapBottomSheetStyles.commandButtonText}>Commander</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[mapBottomSheetStyles.commandButton, { backgroundColor: '#ef4444' }]}
+        onPress={handleLogout}
+      >
+        <Text style={mapBottomSheetStyles.commandButtonText}>Déconnexion</Text>
       </TouchableOpacity>
     </View>
   )

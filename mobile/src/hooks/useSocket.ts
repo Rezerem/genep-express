@@ -10,7 +10,7 @@ import type { AgentPosition } from '../types'
 
 let socketInstance: Socket | null = null
 
-export function useSocket(): void {
+export function useSocket(): { socket: Socket | null } {
   const token = useAuthStore((state) => state.token)
   const setAgents = usePositionsStore((state) => state.setAgents)
 
@@ -42,6 +42,12 @@ export function useSocket(): void {
         setAgents(data.agents)
       })
 
+      // Listen for availability changes
+      socketInstance.on('genep:availability', (data: { id: string; name: string; available: boolean }) => {
+        const { updateAgentAvailability } = usePositionsStore.getState()
+        updateAgentAvailability(data.id, data.available)
+      })
+
       // Handle connection errors
       socketInstance.on('connect_error', (error: Error) => {
         console.warn('Socket connection error:', error.message)
@@ -56,4 +62,6 @@ export function useSocket(): void {
       }
     }
   }, [token, setAgents])
+
+  return { socket: socketInstance }
 }

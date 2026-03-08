@@ -17,6 +17,7 @@ export async function healthRoute(fastify: FastifyInstance): Promise<void> {
         status: 'ok',
         db: 'unknown',
         redis: 'unknown',
+        overpass: 'unknown',
         uptime: Math.floor(process.uptime()),
       }
 
@@ -38,6 +39,19 @@ export async function healthRoute(fastify: FastifyInstance): Promise<void> {
       } catch (err: unknown) {
         fastify.log.error({ err }, 'Health check: Redis failed')
         result.redis = 'error'
+        result.status = 'degraded'
+      }
+
+      // ── Overpass API ──────────────────────────────────────────────────────────
+      try {
+        const overpassResponse = await fetch('https://overpass-api.de/api/status', {
+          signal: AbortSignal.timeout(5000), // 5 second timeout
+        })
+        result.overpass = overpassResponse.ok ? 'ok' : 'error'
+        if (result.overpass === 'error') result.status = 'degraded'
+      } catch (err: unknown) {
+        fastify.log.warn({ err }, 'Health check: Overpass API failed')
+        result.overpass = 'error'
         result.status = 'degraded'
       }
 
