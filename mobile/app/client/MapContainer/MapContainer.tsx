@@ -67,7 +67,8 @@ export function MapContainer({ userLocation, pistes, agents }: MapContainerProps
       </body>
       </html>
     `
-  }, [userLocation, agents])
+  }, [userLocation.lat, userLocation.lng, agents.map(a => `${a.id}${a.lat}${a.lng}${a.available}`).join(',')])
+
 
   if (!userLocation) {
     return <></>

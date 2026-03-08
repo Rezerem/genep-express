@@ -1,4 +1,4 @@
-import React, { ReactElement, useEffect } from 'react'
+import React, { ReactElement } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { useHealthCheck, type HealthStatus } from '@/hooks/useHealthCheck'
 
@@ -16,15 +16,31 @@ const statusLabels: Record<HealthStatus, string> = {
   unreachable: 'API Down',
 }
 
+const serviceColors: Record<string, string> = {
+  ok: '#10b981',
+  error: '#ef4444',
+  unknown: '#9ca3af',
+}
+
 export function HealthIndicator(): ReactElement {
-  const status = useHealthCheck()
+  const details = useHealthCheck()
 
-  useEffect(() => {
-    console.log('[HealthIndicator] Rendered, status:', status)
-  }, [status])
+  const color = statusColors[details.status]
+  const label = statusLabels[details.status]
 
-  const color = statusColors[status]
-  const label = statusLabels[status]
+  return (
+    <View style={styles.container}>
+      <View style={[styles.dot, { backgroundColor: color }]} />
+      <Text style={styles.label}>{label}</Text>
+    </View>
+  )
+}
+
+export function OverpassIndicator(): ReactElement {
+  const details = useHealthCheck()
+
+  const color = serviceColors[details.overpass]
+  const label = details.overpass === 'ok' ? 'Map' : 'Map ⚠'
 
   return (
     <View style={styles.container}>

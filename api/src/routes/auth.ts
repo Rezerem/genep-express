@@ -1,6 +1,7 @@
-import type { FastifyInstance } from 'fastify'
+ import type { FastifyInstance } from 'fastify'
 import type { LoginTicket } from 'google-auth-library'
 import { OAuth2Client } from 'google-auth-library'
+import { z } from 'zod'
 import { verifyJWT } from '../middleware/auth.js'
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
@@ -10,6 +11,11 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 interface GoogleBody {
   idToken: string
 }
+
+const devLoginSchema = z.object({
+  email: z.string().email(),
+  role: z.enum(['CLIENT', 'GENEP', 'ADMIN']).optional().default('CLIENT'),
+})
 
 // ── Route ──────────────────────────────────────────────────────────────────────
 
@@ -49,10 +55,6 @@ export async function authRoute(fastify: FastifyInstance): Promise<void> {
       return reply.code(401).send({ error: 'Invalid Google token' })
     }
 
-    // Seuls les comptes Gmail sont acceptés
-    if (!email.endsWith('@gmail.com')) {
-      return reply.code(403).send({ error: 'Only Gmail accounts are allowed' })
-    }
 
     const user = await fastify.prisma.user.upsert({
       where: { googleId },
@@ -81,5 +83,36 @@ export async function authRoute(fastify: FastifyInstance): Promise<void> {
     if (!user) return reply.code(404).send({ error: 'User not found' })
 
     return reply.send(user)
+  })
+
+  // POST /auth/dev — Development-only endpoint for testing without Google OAuth
+  fastify.post<{ Body: z.infer<typeof devLoginSchema> }>('/auth/dev', {
+    schema: { body: devLoginSchema },
+  }, async (request, reply) => {
+    // Only allow in development
+    if (process.env.NODE_ENV === 'production') {
+      return reply.code(403).send({ error: 'Dev endpoint not available in production' })
+    }
+
+    const { email, role: roleInput = 'CLIENT' } = request.body
+
+    // Create or get test user
+    // Only set role on creation, not on update (preserve existing role)
+    const user = await fastify.prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: { email, googleId: `dev-${email}`, role: roleInput as any },
+    })
+
+    if (!user.active) {
+      return reply.code(403).send({ error: 'Account disabled' })
+    }
+
+    const tokenPayload = { id: user.id, email: user.email, role: user.role }
+    const token = fastify.jwt.sign(tokenPayload, { expiresIn: '7d' })
+
+    fastify.log.info({ email, role: user.role }, 'Development login created')
+
+    return reply.send({ token, user: tokenPayload })
   })
 }

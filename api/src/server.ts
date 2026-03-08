@@ -10,9 +10,11 @@ import {
 
 import prismaPlugin from './plugins/prisma.js'
 import redisPlugin from './plugins/redis.js'
+import socketPlugin from './plugins/socket.js'
 import { healthRoute } from './routes/health.js'
 import { authRoute } from './routes/auth.js'
 import { mapRoute } from './routes/map.js'
+import { genepRoute } from './routes/genep.js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -49,12 +51,14 @@ await fastify.register(jwt, {
 
 await fastify.register(prismaPlugin)
 await fastify.register(redisPlugin)
+await fastify.register(socketPlugin)
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 await fastify.register(healthRoute)
 await fastify.register(authRoute)
 await fastify.register(mapRoute, { prefix: '/map' })
+await fastify.register(genepRoute, { prefix: '/genep' })
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 

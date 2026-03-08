@@ -14,8 +14,6 @@ export type OrderStatus =
 export interface User {
   id: string
   email: string
-  name: string
-  avatarUrl: string | null
   role: Role
 }
 

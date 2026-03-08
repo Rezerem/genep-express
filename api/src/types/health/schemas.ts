@@ -7,6 +7,7 @@ export const HealthReplySchema = z.object({
   status: HealthStatusSchema,
   db: HealthCheckSchema,
   redis: HealthCheckSchema,
+  overpass: HealthCheckSchema,
   uptime: z.number().int().nonnegative(),
 })
 
