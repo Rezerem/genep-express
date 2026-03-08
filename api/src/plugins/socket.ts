@@ -122,7 +122,7 @@ async function socketPlugin(fastify: FastifyInstance): Promise<void> {
     })
   })
 
-  // Broadcast positions every 5 seconds
+  // Broadcast positions every 10 seconds
   const broadcastInterval = setInterval(async () => {
     try {
       const keys = await fastify.redis.keys('location:*')
@@ -182,7 +182,7 @@ async function socketPlugin(fastify: FastifyInstance): Promise<void> {
     } catch (err: unknown) {
       fastify.log.error(err, 'Error broadcasting positions')
     }
-  }, 5000)
+  }, 10000)
 
   // Decorate fastify with io instance
   fastify.decorate('io', io)
