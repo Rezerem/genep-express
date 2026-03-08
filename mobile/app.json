@@ -54,6 +54,13 @@
         "projectId": "f6101db4-1ab8-4034-8cc0-54d4b64c01ec"
       }
     },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/f6101db4-1ab8-4034-8cc0-54d4b64c01ec"
+    },
+    "runtimeVersion": "0.1.0",
     "owner": "michizane"
   }
 }

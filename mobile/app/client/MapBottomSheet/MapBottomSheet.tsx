@@ -1,6 +1,7 @@
 import React, { ReactElement, useState } from 'react'
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
 import type { AgentPosition } from '@/types'
+import { HealthIndicator } from '@/components/HealthIndicator'
 import { mapBottomSheetStyles } from './MapBottomSheet.styles'
 
 interface MapBottomSheetProps {
@@ -57,7 +58,10 @@ export function MapBottomSheet({
 
   return (
     <View style={mapBottomSheetStyles.container}>
-      <Text style={mapBottomSheetStyles.header}>Ravitailleurs disponibles</Text>
+      <View style={mapBottomSheetStyles.headerContainer}>
+        <Text style={mapBottomSheetStyles.header}>Ravitailleurs disponibles</Text>
+        <HealthIndicator />
+      </View>
       <Text style={mapBottomSheetStyles.agentCount}>
         {agentsWithDistance.length} agent{agentsWithDistance.length !== 1 ? 's' : ''} disponible
         {agentsWithDistance.length !== 1 ? 's' : ''}
