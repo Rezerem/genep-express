@@ -77,14 +77,6 @@ export const usePositionsStore = create<PositionsStore>((set, get) => ({
     }))
   },
 
-  updateAgentAvailability: (agentId: string, available: boolean) => {
-    set((state) => ({
-      agents: state.agents.map((agent) =>
-        agent.id === agentId ? { ...agent, available } : agent
-      ),
-    }))
-  },
-
   clear: () => {
     set({ agents: [] })
   },

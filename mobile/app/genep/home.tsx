@@ -6,6 +6,11 @@ import { useAuthStore } from '@/store/useAuthStore'
 import { useSocket } from '@/hooks/useSocket'
 import { api } from '@/api/client'
 
+// Compatible avec Location.LocationSubscription et fallback polling
+interface LocationWatcher {
+  remove: () => void
+}
+
 export default function GenepHomeScreen() {
   const { user, clearAuth } = useAuthStore()
   const { socket } = useSocket()
@@ -13,7 +18,7 @@ export default function GenepHomeScreen() {
   const [available, setAvailable] = useState(false)
   const [loading, setLoading] = useState(true)
   const [locationStatus, setLocationStatus] = useState<string>('Localisation non initiée')
-  const [locationWatcher, setLocationWatcher] = useState<Location.LocationSubscription | null>(null)
+  const [locationWatcher, setLocationWatcher] = useState<LocationWatcher | null>(null)
 
   // Initialiser le profil au montage
   useEffect(() => {
@@ -130,7 +135,7 @@ export default function GenepHomeScreen() {
         // Store interval pour pouvoir l'arrêter plus tard
         setLocationWatcher({
           remove: () => clearInterval(pollInterval),
-        } as any)
+        })
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Location tracking error'
