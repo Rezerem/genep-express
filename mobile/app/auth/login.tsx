@@ -33,7 +33,7 @@ export default function LoginScreen() {
       const { token, user } = response.data
 
       // Store in SecureStore
-      await setAuth(token, { id: user.id, email: user.email, role: user.role as 'GENEP' | 'ADMIN' })
+      await setAuth(token, { id: user.id, email: user.email, role: user.role as 'CLIENT' | 'GENEP' | 'ADMIN' })
 
       // Redirect to home
       router.replace('/')
