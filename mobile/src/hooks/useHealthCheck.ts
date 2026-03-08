@@ -20,8 +20,13 @@ export function useHealthCheck() {
   })
 
   useEffect(() => {
+    console.log('[HealthCheck] Starting health checks')
+    console.log('[HealthCheck] API Base URL:', require('@/api/client').apiClient.defaults.baseURL)
+
+    // Initial check
     const checkHealth = async () => {
       try {
+        console.log('[HealthCheck] Calling /health')
         const res = await api.getHealth()
         setDetails({
           status: res.data.status === 'ok' ? 'ok' : 'degraded',

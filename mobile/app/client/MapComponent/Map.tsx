@@ -108,11 +108,6 @@ export function Map(): ReactElement {
       {/* Carte plein écran */}
       <MapContainer userLocation={userLocation} pistes={pistes} agents={agents} />
 
-      {/* Boutons flottants */}
-      <View style={mapScreenStyles.floatingButtons}>
-        {/* Bouton recentrer GPS à ajouter ici */}
-      </View>
-
       {/* Bottom sheet */}
       <BottomSheet ref={bottomSheetRef} index={0} snapPoints={snapPoints}>
         <BottomSheetView>
