@@ -5,10 +5,15 @@ export const mapBottomSheetStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   header: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
     color: '#1f2937',
   },
   agentCount: {
