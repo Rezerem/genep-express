@@ -14,6 +14,7 @@ export const mapBottomSheetStyles = StyleSheet.create({
   header: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 12,
     color: '#1f2937',
   },
   agentCount: {
