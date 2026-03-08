@@ -7,6 +7,8 @@ Suivre strictement https://www.typescriptlang.org/docs/handbook/declaration-file
 - **Erreurs** : `catch (err: unknown)` — ne pas assumer le type
 - **Augmentation de module** : déclarée dans `src/types/fastify.d.ts`
 - **Imports** : toujours avec extension `.js` (résolution NodeNext)
+- **Naming** : toujours préféré naming clair et concis par rapport à des nom mathématiques vagues
+- **Variables** : toujours privilégier la création d'objet TS au passage d'objet json
 
 ## Conventions Fastify
 - Chaque route exporte une fonction `async (fastify: FastifyInstance): Promise<void>`

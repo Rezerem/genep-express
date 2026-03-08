@@ -12,6 +12,7 @@ import prismaPlugin from './plugins/prisma.js'
 import redisPlugin from './plugins/redis.js'
 import { healthRoute } from './routes/health.js'
 import { authRoute } from './routes/auth.js'
+import { mapRoute } from './routes/map.js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -53,6 +54,7 @@ await fastify.register(redisPlugin)
 
 await fastify.register(healthRoute)
 await fastify.register(authRoute)
+await fastify.register(mapRoute, { prefix: '/map' })
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 

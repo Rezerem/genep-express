@@ -6,16 +6,17 @@ Le client localise les ravitailleurs sur une carte 3D et envoie
 une demande de rendez-vous GPS. Pas de catalogue, pas de panier.
 
 ## Stack technique
-- **Framework** : React Native + Expo SDK 52
-- **Routeur** : expo-router (file-based, comme Next.js)
+- **Framework** : React Native + Expo SDK 54
+- **Routeur** : expo-router 6.0.23 (file-based, comme Next.js)
 - **Langage** : TypeScript 5 strict
 - **État global** : Zustand (stores dans `src/store/`)
 - **Auth** : expo-auth-session → Google Sign-In → POST /auth/google → JWT stocké dans expo-secure-store
-- **Carte** : @maplibre/maplibre-react-native + MapTiler Winter + Terrain RGB
+- **Carte** : react-native-maps (Expo Go compatible pour développement avec Fast Refresh)
 - **GPS** : expo-location (`watchPositionAsync` pour les ravitailleurs)
 - **Temps réel** : socket.io-client
 - **HTTP** : axios avec intercepteur JWT automatique
 - **Push** : expo-notifications (token FCM envoyé au backend après login)
+- **Build** : EAS (Expo Application Services) pour APK customisée avec modules natifs
 
 ## Architecture des dossiers
 ```
@@ -23,13 +24,13 @@ genepexpress-mobile/
 ├── app/                       # Routes expo-router
 │   ├── _layout.tsx            # Root layout — charge le token au démarrage
 │   ├── index.tsx              # Route "/" — redirige selon auth/role (B-01)
-│   ├── (auth)/
+│   ├── auth/
 │   │   └── login.tsx          # Écran Google Sign-In (B-01)
-│   ├── (client)/              # Screens skieurs
+│   ├── client/                # Screens skieurs
 │   │   ├── _layout.tsx
 │   │   ├── map.tsx            # Carte 3D + marqueurs agents (B-04)
 │   │   └── order/[id].tsx     # Suivi commande temps réel (B-07)
-│   └── (genep)/               # Screens ravitailleurs
+│   └── genep/                 # Screens ravitailleurs
 │       ├── _layout.tsx
 │       ├── home.tsx           # Toggle service ON/OFF (B-02)
 │       └── orders.tsx         # Liste commandes entrantes (B-07)
@@ -53,11 +54,7 @@ genepexpress-mobile/
 ```
 
 ## Conventions TypeScript
-- Même règles que le back — Do's & Don'ts officiels
-- JSX components : retour `JSX.Element` explicite
-- `interface` pour les props, `type` pour les unions
-- Jamais `any`, `catch (err: unknown)`
-- Imports alias : `@/` → `src/`
+Suivre convention.md
 
 ## Gestion de l'état
 ```
@@ -76,20 +73,65 @@ EXPO_PUBLIC_MAPTILER_KEY=
 ⚠️ `EXPO_PUBLIC_*` est injecté dans le bundle — ne jamais y mettre de secrets.
 
 ## Commandes
-```powershell
-npm install
-npx expo start             # QR code pour Expo Go
-npx expo start --tunnel    # Si le pare-feu bloque le port 8081
-npm run typecheck          # tsc --noEmit
-eas build --platform android --profile preview  # APK cloud (B-03+)
+
+### Développement
+```bash
+npm install --legacy-peer-deps      # Installer dépendances (SDK 54 requis)
+npm start                           # Lancer serveur Expo
+npm start -- --tunnel              # Mode tunnel (si pare-feu bloque)
+npm run typecheck                  # Vérifier types TypeScript
 ```
+
+### Build & Déploiement (EAS)
+```bash
+# Une seule fois : login et initialiser
+eas login
+eas init
+
+# Build preview (développement avec QR code + Fast Refresh)
+eas build --platform android --profile preview
+
+# Build production (AAB pour Google Play)
+eas build --platform android --profile production
+
+# Voir les builds récentes
+eas build --latest
+```
+
+**Voir [EAS_BUILD.md](./EAS_BUILD.md) pour le guide complet de débogage.**
 
 ## Important — EXPO_PUBLIC_API_URL en dev local
 Utiliser l'IP LAN de la machine (pas localhost) :
-```powershell
-ipconfig   # → IPv4 de la carte WiFi, ex: 192.168.1.42
-# → EXPO_PUBLIC_API_URL=http://192.168.1.42:3000
+```bash
+ipconfig   # (Windows) → IPv4 de la carte WiFi, ex: 192.168.1.42
+# Dans .env :
+EXPO_PUBLIC_API_URL=http://192.168.1.42:3000
 ```
+
+## Workflow typique
+
+1. **Développement local (recommandé)** :
+   ```bash
+   npm start
+   # Scanne le QR code avec Expo Go
+   # Fast Refresh = rechargement instantané pour JS
+   # Carte react-native-maps fonctionne immédiatement
+   ```
+
+2. **Build APK preview** (pour tester la version compilée) :
+   ```bash
+   eas build --platform android --profile preview
+   # Installe sur Android physique
+   # Voir [EAS_BUILD.md](./EAS_BUILD.md) pour le débogage
+   ```
+
+3. **Production** :
+   ```bash
+   # Nouvelle build production
+   eas build --platform android --profile production
+
+   # L'APK est prête à télécharger ou publier sur Google Play
+   ```
 
 ## État d'avancement
 - [x] B-00 : Socle Expo + HealthScreen

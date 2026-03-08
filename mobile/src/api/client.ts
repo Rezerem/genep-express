@@ -22,4 +22,12 @@ apiClient.interceptors.request.use(async (config) => {
 export const api = {
   getHealth: () =>
     apiClient.get<{ status: string; db: string; redis: string; uptime: number }>('/health'),
+
+  getPistes: (south: number, west: number, north: number, east: number) =>
+    apiClient.get('/map/pistes', {
+      params: { south, west, north, east },
+    }),
+
+  getAgents: () =>
+    apiClient.get('/map/agents'),
 }
