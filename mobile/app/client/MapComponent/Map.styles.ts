@@ -26,11 +26,4 @@ export const mapScreenStyles = StyleSheet.create({
     fontSize: 14,
     color: '#cc0000',
   },
-  floatingButtons: {
-    position: 'absolute',
-    bottom: 160,
-    right: 16,
-    zIndex: 10,
-    gap: 12,
-  },
 })
