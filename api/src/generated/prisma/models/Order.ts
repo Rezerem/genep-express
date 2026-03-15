@@ -42,6 +42,7 @@ export type OrderMinAggregateOutputType = {
   meetLat: number | null
   meetLng: number | null
   genepId: string | null
+  clientId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -52,6 +53,7 @@ export type OrderMaxAggregateOutputType = {
   meetLat: number | null
   meetLng: number | null
   genepId: string | null
+  clientId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +64,7 @@ export type OrderCountAggregateOutputType = {
   meetLat: number
   meetLng: number
   genepId: number
+  clientId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -84,6 +87,7 @@ export type OrderMinAggregateInputType = {
   meetLat?: true
   meetLng?: true
   genepId?: true
+  clientId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -94,6 +98,7 @@ export type OrderMaxAggregateInputType = {
   meetLat?: true
   meetLng?: true
   genepId?: true
+  clientId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -104,6 +109,7 @@ export type OrderCountAggregateInputType = {
   meetLat?: true
   meetLng?: true
   genepId?: true
+  clientId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -201,6 +207,7 @@ export type OrderGroupByOutputType = {
   meetLat: number
   meetLng: number
   genepId: string
+  clientId: string
   createdAt: Date
   updatedAt: Date
   _count: OrderCountAggregateOutputType | null
@@ -234,9 +241,11 @@ export type OrderWhereInput = {
   meetLat?: Prisma.FloatFilter<"Order"> | number
   meetLng?: Prisma.FloatFilter<"Order"> | number
   genepId?: Prisma.StringFilter<"Order"> | string
+  clientId?: Prisma.StringFilter<"Order"> | string
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   genep?: Prisma.XOR<Prisma.GenepeExpressScalarRelationFilter, Prisma.GenepeExpressWhereInput>
+  client?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type OrderOrderByWithRelationInput = {
@@ -245,9 +254,11 @@ export type OrderOrderByWithRelationInput = {
   meetLat?: Prisma.SortOrder
   meetLng?: Prisma.SortOrder
   genepId?: Prisma.SortOrder
+  clientId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   genep?: Prisma.GenepeExpressOrderByWithRelationInput
+  client?: Prisma.UserOrderByWithRelationInput
 }
 
 export type OrderWhereUniqueInput = Prisma.AtLeast<{
@@ -259,9 +270,11 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   meetLat?: Prisma.FloatFilter<"Order"> | number
   meetLng?: Prisma.FloatFilter<"Order"> | number
   genepId?: Prisma.StringFilter<"Order"> | string
+  clientId?: Prisma.StringFilter<"Order"> | string
   createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   genep?: Prisma.XOR<Prisma.GenepeExpressScalarRelationFilter, Prisma.GenepeExpressWhereInput>
+  client?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
 
 export type OrderOrderByWithAggregationInput = {
@@ -270,6 +283,7 @@ export type OrderOrderByWithAggregationInput = {
   meetLat?: Prisma.SortOrder
   meetLng?: Prisma.SortOrder
   genepId?: Prisma.SortOrder
+  clientId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.OrderCountOrderByAggregateInput
@@ -288,6 +302,7 @@ export type OrderScalarWhereWithAggregatesInput = {
   meetLat?: Prisma.FloatWithAggregatesFilter<"Order"> | number
   meetLng?: Prisma.FloatWithAggregatesFilter<"Order"> | number
   genepId?: Prisma.StringWithAggregatesFilter<"Order"> | string
+  clientId?: Prisma.StringWithAggregatesFilter<"Order"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
 }
@@ -300,6 +315,7 @@ export type OrderCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   genep: Prisma.GenepeExpressCreateNestedOneWithoutOrdersInput
+  client: Prisma.UserCreateNestedOneWithoutOrdersInput
 }
 
 export type OrderUncheckedCreateInput = {
@@ -308,6 +324,7 @@ export type OrderUncheckedCreateInput = {
   meetLat: number
   meetLng: number
   genepId: string
+  clientId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -320,6 +337,7 @@ export type OrderUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   genep?: Prisma.GenepeExpressUpdateOneRequiredWithoutOrdersNestedInput
+  client?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
 }
 
 export type OrderUncheckedUpdateInput = {
@@ -328,6 +346,7 @@ export type OrderUncheckedUpdateInput = {
   meetLat?: Prisma.FloatFieldUpdateOperationsInput | number
   meetLng?: Prisma.FloatFieldUpdateOperationsInput | number
   genepId?: Prisma.StringFieldUpdateOperationsInput | string
+  clientId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -338,6 +357,7 @@ export type OrderCreateManyInput = {
   meetLat: number
   meetLng: number
   genepId: string
+  clientId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -357,6 +377,7 @@ export type OrderUncheckedUpdateManyInput = {
   meetLat?: Prisma.FloatFieldUpdateOperationsInput | number
   meetLng?: Prisma.FloatFieldUpdateOperationsInput | number
   genepId?: Prisma.StringFieldUpdateOperationsInput | string
+  clientId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -377,6 +398,7 @@ export type OrderCountOrderByAggregateInput = {
   meetLat?: Prisma.SortOrder
   meetLng?: Prisma.SortOrder
   genepId?: Prisma.SortOrder
+  clientId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -392,6 +414,7 @@ export type OrderMaxOrderByAggregateInput = {
   meetLat?: Prisma.SortOrder
   meetLng?: Prisma.SortOrder
   genepId?: Prisma.SortOrder
+  clientId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -402,6 +425,7 @@ export type OrderMinOrderByAggregateInput = {
   meetLat?: Prisma.SortOrder
   meetLng?: Prisma.SortOrder
   genepId?: Prisma.SortOrder
+  clientId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -409,6 +433,48 @@ export type OrderMinOrderByAggregateInput = {
 export type OrderSumOrderByAggregateInput = {
   meetLat?: Prisma.SortOrder
   meetLng?: Prisma.SortOrder
+}
+
+export type OrderCreateNestedManyWithoutClientInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutClientInput, Prisma.OrderUncheckedCreateWithoutClientInput> | Prisma.OrderCreateWithoutClientInput[] | Prisma.OrderUncheckedCreateWithoutClientInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutClientInput | Prisma.OrderCreateOrConnectWithoutClientInput[]
+  createMany?: Prisma.OrderCreateManyClientInputEnvelope
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+}
+
+export type OrderUncheckedCreateNestedManyWithoutClientInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutClientInput, Prisma.OrderUncheckedCreateWithoutClientInput> | Prisma.OrderCreateWithoutClientInput[] | Prisma.OrderUncheckedCreateWithoutClientInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutClientInput | Prisma.OrderCreateOrConnectWithoutClientInput[]
+  createMany?: Prisma.OrderCreateManyClientInputEnvelope
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+}
+
+export type OrderUpdateManyWithoutClientNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutClientInput, Prisma.OrderUncheckedCreateWithoutClientInput> | Prisma.OrderCreateWithoutClientInput[] | Prisma.OrderUncheckedCreateWithoutClientInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutClientInput | Prisma.OrderCreateOrConnectWithoutClientInput[]
+  upsert?: Prisma.OrderUpsertWithWhereUniqueWithoutClientInput | Prisma.OrderUpsertWithWhereUniqueWithoutClientInput[]
+  createMany?: Prisma.OrderCreateManyClientInputEnvelope
+  set?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  disconnect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  delete?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  update?: Prisma.OrderUpdateWithWhereUniqueWithoutClientInput | Prisma.OrderUpdateWithWhereUniqueWithoutClientInput[]
+  updateMany?: Prisma.OrderUpdateManyWithWhereWithoutClientInput | Prisma.OrderUpdateManyWithWhereWithoutClientInput[]
+  deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
+}
+
+export type OrderUncheckedUpdateManyWithoutClientNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutClientInput, Prisma.OrderUncheckedCreateWithoutClientInput> | Prisma.OrderCreateWithoutClientInput[] | Prisma.OrderUncheckedCreateWithoutClientInput[]
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutClientInput | Prisma.OrderCreateOrConnectWithoutClientInput[]
+  upsert?: Prisma.OrderUpsertWithWhereUniqueWithoutClientInput | Prisma.OrderUpsertWithWhereUniqueWithoutClientInput[]
+  createMany?: Prisma.OrderCreateManyClientInputEnvelope
+  set?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  disconnect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  delete?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  connect?: Prisma.OrderWhereUniqueInput | Prisma.OrderWhereUniqueInput[]
+  update?: Prisma.OrderUpdateWithWhereUniqueWithoutClientInput | Prisma.OrderUpdateWithWhereUniqueWithoutClientInput[]
+  updateMany?: Prisma.OrderUpdateManyWithWhereWithoutClientInput | Prisma.OrderUpdateManyWithWhereWithoutClientInput[]
+  deleteMany?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
 }
 
 export type OrderCreateNestedManyWithoutGenepInput = {
@@ -457,6 +523,66 @@ export type EnumOrderStatusFieldUpdateOperationsInput = {
   set?: $Enums.OrderStatus
 }
 
+export type OrderCreateWithoutClientInput = {
+  id?: string
+  status?: $Enums.OrderStatus
+  meetLat: number
+  meetLng: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  genep: Prisma.GenepeExpressCreateNestedOneWithoutOrdersInput
+}
+
+export type OrderUncheckedCreateWithoutClientInput = {
+  id?: string
+  status?: $Enums.OrderStatus
+  meetLat: number
+  meetLng: number
+  genepId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type OrderCreateOrConnectWithoutClientInput = {
+  where: Prisma.OrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderCreateWithoutClientInput, Prisma.OrderUncheckedCreateWithoutClientInput>
+}
+
+export type OrderCreateManyClientInputEnvelope = {
+  data: Prisma.OrderCreateManyClientInput | Prisma.OrderCreateManyClientInput[]
+  skipDuplicates?: boolean
+}
+
+export type OrderUpsertWithWhereUniqueWithoutClientInput = {
+  where: Prisma.OrderWhereUniqueInput
+  update: Prisma.XOR<Prisma.OrderUpdateWithoutClientInput, Prisma.OrderUncheckedUpdateWithoutClientInput>
+  create: Prisma.XOR<Prisma.OrderCreateWithoutClientInput, Prisma.OrderUncheckedCreateWithoutClientInput>
+}
+
+export type OrderUpdateWithWhereUniqueWithoutClientInput = {
+  where: Prisma.OrderWhereUniqueInput
+  data: Prisma.XOR<Prisma.OrderUpdateWithoutClientInput, Prisma.OrderUncheckedUpdateWithoutClientInput>
+}
+
+export type OrderUpdateManyWithWhereWithoutClientInput = {
+  where: Prisma.OrderScalarWhereInput
+  data: Prisma.XOR<Prisma.OrderUpdateManyMutationInput, Prisma.OrderUncheckedUpdateManyWithoutClientInput>
+}
+
+export type OrderScalarWhereInput = {
+  AND?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
+  OR?: Prisma.OrderScalarWhereInput[]
+  NOT?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
+  id?: Prisma.StringFilter<"Order"> | string
+  status?: Prisma.EnumOrderStatusFilter<"Order"> | $Enums.OrderStatus
+  meetLat?: Prisma.FloatFilter<"Order"> | number
+  meetLng?: Prisma.FloatFilter<"Order"> | number
+  genepId?: Prisma.StringFilter<"Order"> | string
+  clientId?: Prisma.StringFilter<"Order"> | string
+  createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
+}
+
 export type OrderCreateWithoutGenepInput = {
   id?: string
   status?: $Enums.OrderStatus
@@ -464,6 +590,7 @@ export type OrderCreateWithoutGenepInput = {
   meetLng: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  client: Prisma.UserCreateNestedOneWithoutOrdersInput
 }
 
 export type OrderUncheckedCreateWithoutGenepInput = {
@@ -471,6 +598,7 @@ export type OrderUncheckedCreateWithoutGenepInput = {
   status?: $Enums.OrderStatus
   meetLat: number
   meetLng: number
+  clientId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -501,17 +629,44 @@ export type OrderUpdateManyWithWhereWithoutGenepInput = {
   data: Prisma.XOR<Prisma.OrderUpdateManyMutationInput, Prisma.OrderUncheckedUpdateManyWithoutGenepInput>
 }
 
-export type OrderScalarWhereInput = {
-  AND?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
-  OR?: Prisma.OrderScalarWhereInput[]
-  NOT?: Prisma.OrderScalarWhereInput | Prisma.OrderScalarWhereInput[]
-  id?: Prisma.StringFilter<"Order"> | string
-  status?: Prisma.EnumOrderStatusFilter<"Order"> | $Enums.OrderStatus
-  meetLat?: Prisma.FloatFilter<"Order"> | number
-  meetLng?: Prisma.FloatFilter<"Order"> | number
-  genepId?: Prisma.StringFilter<"Order"> | string
-  createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
+export type OrderCreateManyClientInput = {
+  id?: string
+  status?: $Enums.OrderStatus
+  meetLat: number
+  meetLng: number
+  genepId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type OrderUpdateWithoutClientInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
+  meetLat?: Prisma.FloatFieldUpdateOperationsInput | number
+  meetLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  genep?: Prisma.GenepeExpressUpdateOneRequiredWithoutOrdersNestedInput
+}
+
+export type OrderUncheckedUpdateWithoutClientInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
+  meetLat?: Prisma.FloatFieldUpdateOperationsInput | number
+  meetLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  genepId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type OrderUncheckedUpdateManyWithoutClientInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
+  meetLat?: Prisma.FloatFieldUpdateOperationsInput | number
+  meetLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  genepId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type OrderCreateManyGenepInput = {
@@ -519,6 +674,7 @@ export type OrderCreateManyGenepInput = {
   status?: $Enums.OrderStatus
   meetLat: number
   meetLng: number
+  clientId: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -530,6 +686,7 @@ export type OrderUpdateWithoutGenepInput = {
   meetLng?: Prisma.FloatFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  client?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutGenepInput = {
@@ -537,6 +694,7 @@ export type OrderUncheckedUpdateWithoutGenepInput = {
   status?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   meetLat?: Prisma.FloatFieldUpdateOperationsInput | number
   meetLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  clientId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -546,6 +704,7 @@ export type OrderUncheckedUpdateManyWithoutGenepInput = {
   status?: Prisma.EnumOrderStatusFieldUpdateOperationsInput | $Enums.OrderStatus
   meetLat?: Prisma.FloatFieldUpdateOperationsInput | number
   meetLng?: Prisma.FloatFieldUpdateOperationsInput | number
+  clientId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -558,9 +717,11 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   meetLat?: boolean
   meetLng?: boolean
   genepId?: boolean
+  clientId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   genep?: boolean | Prisma.GenepeExpressDefaultArgs<ExtArgs>
+  client?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
 export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -569,9 +730,11 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   meetLat?: boolean
   meetLng?: boolean
   genepId?: boolean
+  clientId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   genep?: boolean | Prisma.GenepeExpressDefaultArgs<ExtArgs>
+  client?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
 export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -580,9 +743,11 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   meetLat?: boolean
   meetLng?: boolean
   genepId?: boolean
+  clientId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   genep?: boolean | Prisma.GenepeExpressDefaultArgs<ExtArgs>
+  client?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
 export type OrderSelectScalar = {
@@ -591,25 +756,30 @@ export type OrderSelectScalar = {
   meetLat?: boolean
   meetLng?: boolean
   genepId?: boolean
+  clientId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "status" | "meetLat" | "meetLng" | "genepId" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "status" | "meetLat" | "meetLng" | "genepId" | "clientId" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   genep?: boolean | Prisma.GenepeExpressDefaultArgs<ExtArgs>
+  client?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type OrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   genep?: boolean | Prisma.GenepeExpressDefaultArgs<ExtArgs>
+  client?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type OrderIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   genep?: boolean | Prisma.GenepeExpressDefaultArgs<ExtArgs>
+  client?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Order"
   objects: {
     genep: Prisma.$GenepeExpressPayload<ExtArgs>
+    client: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -617,6 +787,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     meetLat: number
     meetLng: number
     genepId: string
+    clientId: string
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["order"]>
@@ -1014,6 +1185,7 @@ readonly fields: OrderFieldRefs;
 export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   genep<T extends Prisma.GenepeExpressDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.GenepeExpressDefaultArgs<ExtArgs>>): Prisma.Prisma__GenepeExpressClient<runtime.Types.Result.GetResult<Prisma.$GenepeExpressPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  client<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1048,6 +1220,7 @@ export interface OrderFieldRefs {
   readonly meetLat: Prisma.FieldRef<"Order", 'Float'>
   readonly meetLng: Prisma.FieldRef<"Order", 'Float'>
   readonly genepId: Prisma.FieldRef<"Order", 'String'>
+  readonly clientId: Prisma.FieldRef<"Order", 'String'>
   readonly createdAt: Prisma.FieldRef<"Order", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Order", 'DateTime'>
 }

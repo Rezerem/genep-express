@@ -701,6 +701,7 @@ export const OrderScalarFieldEnum = {
   meetLat: 'meetLat',
   meetLng: 'meetLng',
   genepId: 'genepId',
+  clientId: 'clientId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

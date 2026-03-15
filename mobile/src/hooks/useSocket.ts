@@ -1,18 +1,16 @@
 import { useEffect } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuthStore } from '../store/useAuthStore'
-import { usePositionsStore } from '../store/usePositionsStore'
-import type { AgentPosition } from '../types'
+import { registerSocketHandlers } from '../services/socketHandlers'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Hook Socket.io — gère la connexion WS et les positions temps réel
+// Hook Socket.io — gère la connexion WS et le cycle de vie
 // ─────────────────────────────────────────────────────────────────────────────
 
 let socketInstance: Socket | null = null
 
 export function useSocket(): { socket: Socket | null } {
   const token = useAuthStore((state) => state.token)
-  const setAgents = usePositionsStore((state) => state.setAgents)
 
   useEffect(() => {
     if (!token) {
@@ -23,45 +21,31 @@ export function useSocket(): { socket: Socket | null } {
       return
     }
 
-    // Initialize socket connection
     if (!socketInstance) {
       const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000'
 
       socketInstance = io(apiUrl, {
-        auth: {
-          token,
-        },
+        auth: { token },
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         reconnectionAttempts: 5,
       })
 
-      // Listen for position updates
-      socketInstance.on('positions:update', (data: { agents: AgentPosition[] }) => {
-        setAgents(data.agents)
-      })
+      registerSocketHandlers(socketInstance)
 
-      // Listen for availability changes
-      socketInstance.on('genep:availability', (data: { id: string; name: string; available: boolean }) => {
-        const { updateAgentAvailability } = usePositionsStore.getState()
-        updateAgentAvailability(data.id, data.available)
-      })
-
-      // Handle connection errors
       socketInstance.on('connect_error', (error: Error) => {
         console.warn('Socket connection error:', error.message)
       })
     }
 
-    // Cleanup on unmount
     return () => {
       if (socketInstance && !token) {
         socketInstance.disconnect()
         socketInstance = null
       }
     }
-  }, [token, setAgents])
+  }, [token])
 
   return { socket: socketInstance }
 }

@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken'
 interface SocketAuthToken {
   id: string
   email: string
-  role: 'GENEP' | 'ADMIN'
+  role: 'CLIENT' | 'GENEP' | 'ADMIN'
 }
 
 interface AgentPosition {
@@ -48,12 +48,74 @@ async function socketPlugin(fastify: FastifyInstance): Promise<void> {
   })
 
   // Handle client connections
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     const user = (socket as any).user as SocketAuthToken
+
+    // Join personal room for targeted messages (order:new, order:status, etc.)
+    socket.join(`user:${user.id}`)
+
     fastify.log.info(
       { userId: user.id, role: user.role },
       `Socket connected: ${socket.id}`
     )
+
+    // Emit initial positions immediately to the newly connected client
+    try {
+      const keys = await fastify.redis.keys('location:*')
+
+      let agents: AgentPosition[] = []
+      if (keys.length > 0) {
+        const genepIds = keys.map((k) => k.replace('location:', ''))
+
+        // Batch Prisma query for better performance
+        const geneps = await fastify.prisma.genepeExpress.findMany({
+          where: { id: { in: genepIds } },
+          select: { id: true, name: true, available: true },
+        })
+        const genepMap = new Map<string, { id: string; name: string; available: boolean }>(
+          geneps.map((g: { id: string; name: string; available: boolean }) => [g.id, g])
+        )
+
+        agents = (
+          await Promise.all(
+            keys.map(async (key): Promise<AgentPosition | null> => {
+              const genepId = key.replace('location:', '')
+              const raw = await fastify.redis.get(key)
+              if (!raw) return null
+
+              try {
+                const position = JSON.parse(raw) as {
+                  lat: number
+                  lng: number
+                  altitude: number
+                }
+                const genep = genepMap.get(genepId)
+                if (!genep || !genep.name) return null
+
+                return {
+                  id: genepId,
+                  name: genep.name as string,
+                  lat: position.lat,
+                  lng: position.lng,
+                  altitude: position.altitude,
+                  available: genep.available as boolean,
+                }
+              } catch (parseErr: unknown) {
+                fastify.log.warn(
+                  { genepId },
+                  'Failed to parse position data'
+                )
+                return null
+              }
+            })
+          )
+        ).filter((agent): agent is AgentPosition => agent !== null)
+      }
+
+      socket.emit('positions:update', { agents })
+    } catch (err: unknown) {
+      fastify.log.error(err, 'Error emitting initial positions')
+    }
 
     // Listen for agent position updates (GENEP only)
     socket.on('agent:position', async (payload: unknown) => {

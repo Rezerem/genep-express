@@ -1,6 +1,6 @@
 import axios from 'axios'
 import * as SecureStore from 'expo-secure-store'
-import type { User } from '@/types'
+import type { User, Order, OrderStatus } from '@/types'
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000'
 
@@ -52,4 +52,13 @@ export const api = {
 
   updateAvailability: (available: boolean) =>
     apiClient.patch('/genep/available', { available }),
+
+  createOrder: (genepId: string, meetLat: number, meetLng: number) =>
+    apiClient.post<Order>('/orders', { genepId, meetLat, meetLng }),
+
+  updateOrderStatus: (orderId: string, status: OrderStatus) =>
+    apiClient.patch<Order>(`/orders/${orderId}/status`, { status }),
+
+  getOrder: (orderId: string) =>
+    apiClient.get<Order>(`/orders/${orderId}`),
 }

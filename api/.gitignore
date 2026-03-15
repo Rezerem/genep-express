@@ -10,3 +10,6 @@ prisma/migrations/
 # OS
 .DS_Store
 Thumbs.db
+
+# Expo (mobile only, should not be in backend)
+.expo/

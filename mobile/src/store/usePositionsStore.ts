@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { AgentPosition } from '../types'
+import { haversine2D } from '../lib/distance'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Store Zustand — positions des ravitailleurs en temps réel
@@ -13,26 +14,6 @@ interface PositionsStore {
   clear: () => void
 }
 
-// Haversine distance en mètres
-function calculateDistance(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number {
-  const R = 6371000 // Earth radius en mètres
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLng = ((lng2 - lng1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return R * c
-}
-
 // Compare si deux agents ont vraiment changé (ignore les petits changements GPS)
 function agentsEqual(a: AgentPosition, b: AgentPosition): boolean {
   // Disponibilité doit être exactement la même
@@ -40,7 +21,7 @@ function agentsEqual(a: AgentPosition, b: AgentPosition): boolean {
   // Nom doit être le même
   if (a.name !== b.name) return false
   // Position: ignore les changements < 10 mètres
-  const distance = calculateDistance(a.lat, a.lng, b.lat, b.lng)
+  const distance = haversine2D(a.lat, a.lng, b.lat, b.lng)
   return distance < 10 // Tolérance 10 mètres
 }
 
