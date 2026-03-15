@@ -1,10 +1,13 @@
-import { Stack } from 'expo-router'
-import {ReactElement} from "react";
-
 /**
- * Layout pour les écrans client/skieur
- * Utilise Stack pour la navigation
+ * CLIENT LAYOUT
+ * ───────────────────────────────────────────────────────
+ * Layout pour les écrans du client/skieur
+ * - Navigation entre map, order tracking
+ * - Groupé sous /client/*
  */
+
+import { Stack } from 'expo-router'
+import { ReactElement } from 'react'
 export default function ClientLayout(): ReactElement {
   return (
     <Stack

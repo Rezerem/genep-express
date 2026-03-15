@@ -30,6 +30,7 @@ model User {
   updatedAt DateTime       @updatedAt
 
   agent     GenepeExpress?
+  orders    Order[]
 }
 
 // ── Ravitailleur ──────────────────────────────────────────────────────────────
@@ -70,6 +71,9 @@ model Order {
 
   genepId String
   genep   GenepeExpress @relation(fields: [genepId], references: [id])
+
+  clientId String
+  client   User    @relation(fields: [clientId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

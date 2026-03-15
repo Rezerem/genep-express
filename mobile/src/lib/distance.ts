@@ -7,7 +7,7 @@ const EARTH_RADIUS_METERS = 6_371_000
 /**
  * Haversine 2D — distance à plat entre deux points GPS
  */
-function haversine2D(
+export function haversine2D(
   startLatitude: number,
   startLongitude: number,
   endLatitude: number,

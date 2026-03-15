@@ -158,7 +158,11 @@ function transformOverpassToGeoJSON(data: unknown): GeoJSONFeatureCollection {
   }
 }
 
-// ── Route Handler ──────────────────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const PISTES_CACHE_TTL_S = 30 * 60  // 30 minutes
+
+// ── Route Handler ──────────────────────────────────────────────────────────
 
 export async function mapRoute(fastify: FastifyInstance): Promise<void> {
   // GET /map/pistes — proxy Overpass API avec cache Redis
@@ -205,8 +209,8 @@ export async function mapRoute(fastify: FastifyInstance): Promise<void> {
         // Transform to GeoJSON
         const geojson = transformOverpassToGeoJSON(overpassData)
 
-        // Cache for 5 minutes
-        await fastify.redis.setEx(cacheKey, 300, JSON.stringify(geojson))
+        // Cache for 30 minutes
+        await fastify.redis.setEx(cacheKey, PISTES_CACHE_TTL_S, JSON.stringify(geojson))
 
         return reply.send(geojson)
       } catch (err: unknown) {

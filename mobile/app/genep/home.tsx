@@ -1,24 +1,26 @@
 import { useEffect, useState } from 'react'
-import { View, Text, TouchableOpacity, Switch, ActivityIndicator } from 'react-native'
-import * as Location from 'expo-location'
+import { View, Text, TouchableOpacity, Switch, ActivityIndicator, Modal } from 'react-native'
 import { router } from 'expo-router'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useSocket } from '@/hooks/useSocket'
+import { useOrderStore } from '@/store/useOrderStore'
+import { useGpsTracking } from '@/hooks/useGpsTracking'
+import { useOrderManagement } from '@/hooks/useOrderManagement'
 import { api } from '@/api/client'
-
-// Compatible avec Location.LocationSubscription et fallback polling
-interface LocationWatcher {
-  remove: () => void
-}
+import { homeStyles as s } from './home.styles'
 
 export default function GenepHomeScreen() {
   const { user, clearAuth } = useAuthStore()
   const { socket } = useSocket()
+  const incomingOrder = useOrderStore((st) => st.incomingOrder)
+  const genepActiveOrder = useOrderStore((st) => st.genepActiveOrder)
 
   const [available, setAvailable] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [locationStatus, setLocationStatus] = useState<string>('Localisation non initiée')
-  const [locationWatcher, setLocationWatcher] = useState<LocationWatcher | null>(null)
+
+  const { locationStatus, startTracking, stopTracking } = useGpsTracking()
+  const { handlingOrder, handleAcceptOrder, handleRefuseOrder, handleOnRoute, handleDelivered } =
+    useOrderManagement()
 
   // Initialiser le profil au montage
   useEffect(() => {
@@ -27,9 +29,7 @@ export default function GenepHomeScreen() {
         setLoading(true)
         const displayName = user?.email?.split('@')[0] || 'Ravitailleur'
         await api.createGenepProfile(displayName)
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Failed to create profile'
-        setLocationStatus(`Erreur profil: ${message}`)
+      } catch (err) {
         console.error('Profile creation error:', err)
       } finally {
         setLoading(false)
@@ -46,9 +46,7 @@ export default function GenepHomeScreen() {
     const updateAvailability = async () => {
       try {
         await api.updateAvailability(available)
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Failed to update availability'
-        setLocationStatus(`Erreur: ${message}`)
+      } catch (err) {
         console.error('Availability update error:', err)
         setAvailable(!available)
       }
@@ -57,206 +55,136 @@ export default function GenepHomeScreen() {
     updateAvailability()
   }, [available])
 
-  // Gérer le suivi GPS séparement pour éviter les boucles infinies
+  // Gérer le suivi GPS
   useEffect(() => {
-    const manageTacking = async () => {
+    const manageTracking = async () => {
       if (available) {
-        await startLocationTracking()
+        const success = await startTracking(socket)
+        if (!success) setAvailable(false)
       } else {
-        if (locationWatcher) {
-          locationWatcher.remove()
-          setLocationWatcher(null)
-        }
-        setLocationStatus('Service désactivé')
+        stopTracking()
       }
     }
 
-    manageTacking()
-  }, [available])
-
-  const startLocationTracking = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync()
-      if (status !== 'granted') {
-        setLocationStatus('Permission de localisation refusée')
-        setAvailable(false)
-        return
-      }
-
-      try {
-        // Commencer à suivre la position avec precision haute
-        const watcher = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            timeInterval: 10000, // Mettre à jour toutes les 10 secondes (match broadcast)
-            distanceInterval: 0, // Peu importe la distance (timeInterval prime)
-          },
-          (location) => {
-            const { latitude: lat, longitude: lng, altitude } = location.coords
-            setLocationStatus(`Position: ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`)
-
-            // Émettre la position via socket
-            if (socket?.connected) {
-              socket.emit('agent:position', {
-                lat,
-                lng,
-                altitude: altitude || 0,
-              })
-            }
-          }
-        )
-
-        setLocationWatcher(watcher)
-      } catch (watchErr: unknown) {
-        // Si watchPositionAsync échoue (expo-keep-awake issue), utiliser getCurrentPositionAsync en polling
-        console.warn('watchPositionAsync failed, falling back to polling:', watchErr)
-        setLocationStatus('Mode de localisation dégradé (polling)')
-
-        const pollInterval = setInterval(async () => {
-          try {
-            const location = await Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.High,
-            })
-            const { latitude: lat, longitude: lng, altitude } = location.coords
-            setLocationStatus(`Position: ${lat.toFixed(4)}°, ${lng.toFixed(4)}° (polling)`)
-
-            if (socket?.connected) {
-              socket.emit('agent:position', {
-                lat,
-                lng,
-                altitude: altitude || 0,
-              })
-            }
-          } catch (err: unknown) {
-            console.error('Polling error:', err)
-          }
-        }, 10000) // Poll toutes les 10 secondes (match broadcast)
-
-        // Store interval pour pouvoir l'arrêter plus tard
-        setLocationWatcher({
-          remove: () => clearInterval(pollInterval),
-        })
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Location tracking error'
-      setLocationStatus(`Erreur GPS: ${message}`)
-      console.error('Location tracking error:', err)
-      setAvailable(false)
-    }
-  }
+    manageTracking()
+  }, [available, socket])
 
   const handleLogout = async () => {
-    if (locationWatcher) {
-      locationWatcher.remove()
-    }
+    stopTracking()
     await clearAuth()
     router.replace('/')
   }
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={s.loadingContainer}>
         <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 12, color: '#666' }}>Initialisation du profil...</Text>
+        <Text style={s.loadingText}>Initialisation du profil...</Text>
       </View>
     )
   }
 
   return (
-    <View
-      style={{
-        flex: 1,
-        paddingHorizontal: 20,
-        paddingVertical: 40,
-        backgroundColor: '#f9fafb',
-      }}
-    >
-      {/* En-tête */}
-      <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#1f2937', marginBottom: 8 }}>
-        Service Ravitailleur
-      </Text>
-      <Text style={{ fontSize: 14, color: '#6b7280', marginBottom: 32 }}>
-        {user?.email}
-      </Text>
-
-      {/* Toggle disponibilité */}
-      <View
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: 12,
-          padding: 16,
-          marginBottom: 20,
-          borderWidth: 1,
-          borderColor: '#e5e7eb',
-        }}
-      >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: '#1f2937' }}>
-            En service
-          </Text>
-          <Switch
-            value={available}
-            onValueChange={setAvailable}
-            trackColor={{ false: '#d1d5db', true: '#10b981' }}
-          />
+    <>
+      {/* Modal commande entrante */}
+      <Modal visible={incomingOrder !== null} transparent animationType="slide">
+        <View style={s.modalOverlay}>
+          <View style={s.modalSheet}>
+            <Text style={s.modalTitle}>Nouvelle commande !</Text>
+            {incomingOrder && (
+              <View style={s.modalMeetBox}>
+                <Text style={s.modalMeetLabel}>Point de rendez-vous</Text>
+                <Text style={s.modalMeetCoord}>Lat: {incomingOrder.meetLat.toFixed(4)}</Text>
+                <Text style={s.modalMeetCoord}>Lng: {incomingOrder.meetLng.toFixed(4)}</Text>
+              </View>
+            )}
+            <TouchableOpacity
+              onPress={handleAcceptOrder}
+              disabled={handlingOrder}
+              style={s.btnAccept}
+            >
+              <Text style={s.btnModalText}>{handlingOrder ? 'Traitement...' : 'Accepter'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleRefuseOrder}
+              disabled={handlingOrder}
+              style={s.btnRefuse}
+            >
+              <Text style={s.btnModalText}>{handlingOrder ? 'Traitement...' : 'Refuser'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+      </Modal>
+
+      {/* Écran principal */}
+      <View style={s.screen}>
+        <Text style={s.title}>Service Ravitailleur</Text>
+        <Text style={s.subtitle}>{user?.email}</Text>
+
+        {/* Toggle disponibilité */}
+        <View style={s.card}>
+          <View style={s.cardRow}>
+            <Text style={s.cardLabel}>En service</Text>
+            <Switch
+              value={available}
+              onValueChange={setAvailable}
+              trackColor={{ false: '#d1d5db', true: '#10b981' }}
+            />
+          </View>
+        </View>
+
+        {/* Statut GPS */}
+        <View style={s.gpsCard}>
+          <Text style={s.gpsLabel}>Statut GPS</Text>
+          <Text style={available ? s.gpsStatusActive : s.gpsStatusInactive}>{locationStatus}</Text>
+        </View>
+
+        {/* Livraison en cours */}
+        {genepActiveOrder && (
+          <View style={s.activeOrderCard}>
+            <Text style={s.activeOrderTitle}>Livraison en cours</Text>
+            <View style={s.meetPointBox}>
+              <Text style={s.meetPointLabel}>Point de rendez-vous</Text>
+              <Text style={s.meetPointCoord}>Lat: {genepActiveOrder.meetLat.toFixed(4)}</Text>
+              <Text style={s.meetPointCoord}>Lng: {genepActiveOrder.meetLng.toFixed(4)}</Text>
+              <Text style={s.meetPointStatus}>
+                Statut:{' '}
+                <Text style={s.meetPointStatusValue}>{genepActiveOrder.status}</Text>
+              </Text>
+            </View>
+
+            {genepActiveOrder.status === 'accepted' && (
+              <TouchableOpacity
+                onPress={handleOnRoute}
+                disabled={handlingOrder}
+                style={s.btnBlue}
+              >
+                <Text style={s.btnTextMd}>{handlingOrder ? 'Mise à jour...' : 'Je suis en route'}</Text>
+              </TouchableOpacity>
+            )}
+
+            {genepActiveOrder.status === 'en_route' && (
+              <TouchableOpacity
+                onPress={handleDelivered}
+                disabled={handlingOrder}
+                style={s.btnGreen}
+              >
+                <Text style={s.btnTextMd}>{handlingOrder ? 'Mise à jour...' : 'Livraison effectuée'}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Mode client */}
+        <TouchableOpacity onPress={() => router.replace('/client/map')} style={s.btnClientMode}>
+          <Text style={s.btnTextLg}>Passer en Mode Client</Text>
+        </TouchableOpacity>
+
+        {/* Déconnexion */}
+        <TouchableOpacity onPress={handleLogout} style={s.btnLogout}>
+          <Text style={s.btnTextLg}>Déconnexion</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* Statut GPS */}
-      <View
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: 12,
-          padding: 16,
-          marginBottom: 32,
-          borderWidth: 1,
-          borderColor: '#e5e7eb',
-        }}
-      >
-        <Text style={{ fontSize: 14, fontWeight: '600', color: '#6b7280', marginBottom: 8 }}>
-          Statut GPS
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: available ? '#059669' : '#6b7280',
-            fontFamily: 'monospace',
-          }}
-        >
-          {locationStatus}
-        </Text>
-      </View>
-
-      {/* Bouton mode client */}
-      <TouchableOpacity
-        onPress={() => router.replace('/client/map')}
-        style={{
-          backgroundColor: '#3b82f6',
-          paddingVertical: 14,
-          borderRadius: 8,
-          alignItems: 'center',
-          marginBottom: 12,
-        }}
-      >
-        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
-          Passer en Mode Client
-        </Text>
-      </TouchableOpacity>
-
-      {/* Bouton déconnexion */}
-      <TouchableOpacity
-        onPress={handleLogout}
-        style={{
-          backgroundColor: '#ef4444',
-          paddingVertical: 14,
-          borderRadius: 8,
-          alignItems: 'center',
-        }}
-      >
-        <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
-          Déconnexion
-        </Text>
-      </TouchableOpacity>
-    </View>
+    </>
   )
 }

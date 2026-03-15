@@ -15,14 +15,15 @@ import { healthRoute } from './routes/health.js'
 import { authRoute } from './routes/auth.js'
 import { mapRoute } from './routes/map.js'
 import { genepRoute } from './routes/genep.js'
+import { ordersRoute } from './routes/orders.js'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 // Utilisé pour l'augmentation du JWT (B-01) — authentification Google OAuth
 declare module '@fastify/jwt' {
   interface FastifyJWT {
-    payload: { id: string; email: string; role: 'GENEP' | 'ADMIN' }
-    user: { id: string; email: string; role: 'GENEP' | 'ADMIN' }
+    payload: { id: string; email: string; role: 'CLIENT' | 'GENEP' | 'ADMIN' }
+    user: { id: string; email: string; role: 'CLIENT' | 'GENEP' | 'ADMIN' }
   }
 }
 
@@ -59,6 +60,7 @@ await fastify.register(healthRoute)
 await fastify.register(authRoute)
 await fastify.register(mapRoute, { prefix: '/map' })
 await fastify.register(genepRoute, { prefix: '/genep' })
+await fastify.register(ordersRoute, { prefix: '/orders' })
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 

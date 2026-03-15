@@ -1,92 +1,56 @@
-import React, { ReactElement, useEffect, useState, useMemo, useRef } from 'react'
-import { View, ActivityIndicator, Text } from 'react-native'
-import * as Location from 'expo-location'
+import React, { ReactElement, useMemo, useRef } from 'react'
+import { View, ActivityIndicator, Text, TouchableOpacity } from 'react-native'
+import { useSharedValue } from 'react-native-reanimated'
+import { useRouter } from 'expo-router'
+import { useWindowDimensions } from 'react-native'
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet'
+import MapView from 'react-native-maps'
 import { useSocket } from '@/hooks/useSocket'
 import { usePositionsStore } from '@/store/usePositionsStore'
-import { api } from '@/api/client'
+import { useOrderStore } from '@/store/useOrderStore'
+import { useMapInitialization } from '@/hooks/useMapInitialization'
+import { useDynamicPistes } from '@/hooks/useDynamicPistes'
 import { mapScreenStyles } from './Map.styles'
 import { MapContainer } from '../MapContainer'
 import { MapBottomSheet } from '../MapBottomSheet/MapBottomSheet'
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Écran carte — react-native-maps avec pistes (GeoJSON) et marqueurs agents temps réel
-// ─────────────────────────────────────────────────────────────────────────────
+import { RecenterButton } from './RecenterButton'
 
 export function Map(): ReactElement {
-  const [userLocation, setUserLocation] = useState<{
-    lat: number
-    lng: number
-    alt: number
-  } | null>(null)
-  const [pistes, setPistes] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const { height: screenHeight } = useWindowDimensions()
 
   const agents = usePositionsStore((state) => state.agents)
+  const activeOrder = useOrderStore((state) => state.activeOrder)
   const bottomSheetRef = useRef<BottomSheet>(null)
+  const mapRef = useRef<MapView>(null)
+  const animatedPosition = useSharedValue(0)
   const snapPoints = useMemo(() => ['12%', '45%'], [])
+
+  const { userLocation, loading: initialLoading } = useMapInitialization()
+  const { pistes, loading: pistesLoading, onRegionChange } = useDynamicPistes()
 
   // Initialize Socket.io connection for real-time positions
   useSocket()
 
-  // Get user location and load pistes data
-  useEffect(() => {
-    let isMounted = true
+  const handleRecenter = () => {
+    if (!userLocation) return
+    mapRef.current?.animateToRegion(
+      {
+        latitude: userLocation.lat,
+        longitude: userLocation.lng,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      },
+      500
+    )
+  }
 
-    const initializeMap = async () => {
-      try {
-        // Request location permission
-        const { status } = await Location.requestForegroundPermissionsAsync()
-        if (status !== 'granted') {
-          console.warn('Location permission denied')
-          setLoading(false)
-          return
-        }
+  const isTracking = activeOrder?.status === 'en_route'
+  const meetingPoint = isTracking
+    ? { lat: activeOrder.meetLat, lng: activeOrder.meetLng }
+    : null
 
-        // Get current location
-        const location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        })
-
-        const lat = location.coords.latitude
-        const lng = location.coords.longitude
-        const alt = location.coords.altitude ?? 0
-
-        if (isMounted) {
-          setUserLocation({ lat, lng, alt })
-
-          // Calculate bounding box ~5km around user position
-          const bboxOffset = 0.045
-          const bbox = {
-            south: lat - bboxOffset,
-            west: lng - bboxOffset,
-            north: lat + bboxOffset,
-            east: lng + bboxOffset,
-          }
-
-          // Fetch pistes
-          const response = await api.getPistes(bbox.south, bbox.west, bbox.north, bbox.east)
-          if (isMounted) {
-            setPistes(response.data)
-          }
-        }
-      } catch (error) {
-        console.error('Failed to initialize map:', error)
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    initializeMap()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  if (loading) {
+  if (initialLoading) {
     return (
       <View style={mapScreenStyles.loadingContainer}>
         <ActivityIndicator size="large" color="#3b82f6" />
@@ -106,14 +70,40 @@ export function Map(): ReactElement {
   return (
     <View style={mapScreenStyles.container}>
       {/* Carte plein écran */}
-      <MapContainer userLocation={userLocation} pistes={pistes} agents={agents} />
+      <MapContainer
+        userLocation={userLocation}
+        pistes={pistes}
+        agents={agents}
+        meetingPoint={meetingPoint}
+        onMapReady={(ref) => {
+          mapRef.current = ref.current
+        }}
+        onRegionChangeComplete={onRegionChange}
+      />
+
+      {/* Bouton recentrer animé */}
+      <RecenterButton onPress={handleRecenter} animatedPosition={animatedPosition} screenHeight={screenHeight} />
 
       {/* Bottom sheet */}
-      <BottomSheet ref={bottomSheetRef} index={0} snapPoints={snapPoints}>
+      <BottomSheet ref={bottomSheetRef} index={0} snapPoints={snapPoints} animatedPosition={animatedPosition}>
         <BottomSheetView>
           <MapBottomSheet agents={agents} userLocation={userLocation} />
         </BottomSheetView>
       </BottomSheet>
+
+      {/* Overlay de suivi — affiche seulement si en_route */}
+      {isTracking && activeOrder && (
+        <View style={mapScreenStyles.trackingOverlay}>
+          <Text style={mapScreenStyles.trackingLabel}>
+            🚚 Ravitailleur en route
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.push(`/client/order/tracking?id=${activeOrder.id}`)}
+          >
+            <Text style={mapScreenStyles.trackingLink}>{'< Suivi'}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   )
 }

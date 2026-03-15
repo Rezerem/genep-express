@@ -1,34 +1,17 @@
 import React, { ReactElement, useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native'
 import { router } from 'expo-router'
 import type { AgentPosition } from '@/types'
 import { HealthIndicator, OverpassIndicator } from '@/components/HealthIndicator'
 import { useAuthStore } from '@/store/useAuthStore'
+import { useOrderStore } from '@/store/useOrderStore'
+import { api } from '@/api/client'
+import { haversine2D } from '@/lib/distance'
 import { mapBottomSheetStyles } from './MapBottomSheet.styles'
 
 interface MapBottomSheetProps {
   agents: AgentPosition[]
   userLocation: { lat: number; lng: number; alt: number } | null
-}
-
-// Haversine distance calculation (same as backend)
-function calculateDistance(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number {
-  const R = 6371 // Earth radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLng = ((lng2 - lng1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return R * c
 }
 
 export function MapBottomSheet({
@@ -37,25 +20,25 @@ export function MapBottomSheet({
 }: MapBottomSheetProps): ReactElement {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const clearAuth = useAuthStore((s) => s.clearAuth)
+  const setOrder = useOrderStore((s) => s.setOrder)
 
   const agentsWithDistance = agents
     .map((agent) => ({
       ...agent,
       distance: userLocation
-        ? calculateDistance(
-            userLocation.lat,
-            userLocation.lng,
-            agent.lat,
-            agent.lng
-          )
+        ? haversine2D(userLocation.lat, userLocation.lng, agent.lat, agent.lng) / 1000
         : 0,
     }))
     .sort((a, b) => a.distance - b.distance)
 
-  const handleCommand = () => {
-    if (selectedAgentId) {
-      // TODO: Implement command creation logic
-      console.log(`Commanding agent: ${selectedAgentId}`)
+  const handleCommand = async () => {
+    if (!selectedAgentId || !userLocation) return
+    try {
+      const { data } = await api.createOrder(selectedAgentId, userLocation.lat, userLocation.lng)
+      setOrder(data)
+      router.push(`/client/order/tracking?id=${data.id}`)
+    } catch (err: unknown) {
+      Alert.alert('Erreur', 'Impossible de passer la commande. L\'agent est peut-être indisponible.')
     }
   }
 

@@ -53,6 +53,10 @@ genepexpress-mobile/
 │       └── HealthScreen.tsx   # Gate de validation B-00
 ```
 
+## Audit & correctifs connus
+Consulter **[audit.md](./audit.md)** avant toute modification structurelle.
+Ce fichier recense les audits de qualité passés et les correctifs associés (dont les fix de cache Metro, doublons supprimés, séparations de concerns).
+
 ## Conventions TypeScript
 Suivre convention.md
 
