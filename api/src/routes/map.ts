@@ -2,6 +2,9 @@ import type { FastifyInstance } from 'fastify'
 import { createHash } from 'crypto'
 import { z } from 'zod'
 import { ZodTypeProvider } from '@marcalexiei/fastify-type-provider-zod'
+import * as fs from 'fs'
+import * as path from 'path'
+import { fileURLToPath } from 'url'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -93,19 +96,27 @@ function buildOverpassQuery(
 out geom;`
 }
 
-function transformOverpassToGeoJSON(data: unknown): GeoJSONFeatureCollection {
+function transformOverpassToGeoJSON(data: unknown, cacheKey: string, fastifyLog: any): GeoJSONFeatureCollection {
   const features: GeoJSONFeature[] = []
 
   if (!data || typeof data !== 'object') {
+    fastifyLog.warn(`[Pistes Parsing] Invalid data type for ${cacheKey}`)
     return { type: 'FeatureCollection', features }
   }
 
   const d = data as any
+  let waysProcessed = 0
+  let relationsProcessed = 0
+  let waysSkipped = 0
+  let relationsSkipped = 0
 
   // Process ways
   if (Array.isArray(d.ways)) {
     d.ways.forEach((way: any) => {
-      if (!way.geometry || !Array.isArray(way.geometry) || way.geometry.length < 2) return
+      if (!way.geometry || !Array.isArray(way.geometry) || way.geometry.length < 2) {
+        waysSkipped++
+        return
+      }
 
       const coordinates = way.geometry.map((node: any) => [node.lon, node.lat] as [number, number])
 
@@ -124,13 +135,17 @@ function transformOverpassToGeoJSON(data: unknown): GeoJSONFeatureCollection {
           status: way.tags?.['piste:status'],
         },
       })
+      waysProcessed++
     })
   }
 
   // Process relations
   if (Array.isArray(d.relations)) {
     d.relations.forEach((relation: any) => {
-      if (!relation.geometry || !Array.isArray(relation.geometry) || relation.geometry.length < 2) return
+      if (!relation.geometry || !Array.isArray(relation.geometry) || relation.geometry.length < 2) {
+        relationsSkipped++
+        return
+      }
 
       const coordinates = relation.geometry.map((node: any) => [node.lon, node.lat] as [number, number])
 
@@ -149,8 +164,13 @@ function transformOverpassToGeoJSON(data: unknown): GeoJSONFeatureCollection {
           status: relation.tags?.['piste:status'],
         },
       })
+      relationsProcessed++
     })
   }
+
+  fastifyLog.info(
+    `[Pistes Parsing] ${cacheKey}: processed=${waysProcessed} ways + ${relationsProcessed} relations, skipped=${waysSkipped} ways + ${relationsSkipped} relations`
+  )
 
   return {
     type: 'FeatureCollection',
@@ -162,10 +182,75 @@ function transformOverpassToGeoJSON(data: unknown): GeoJSONFeatureCollection {
 
 const PISTES_CACHE_TTL_S = 30 * 60  // 30 minutes
 
+// ── Load Static Data ────────────────────────────────────────────────────────
+
+let staticPistesData: GeoJSONFeatureCollection | null = null
+
+function loadStaticPistesData(): void {
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url))
+    const dataPath = path.join(__dirname, '../data/pistes-static.geojson')
+
+    if (fs.existsSync(dataPath)) {
+      const fileContent = fs.readFileSync(dataPath, 'utf-8')
+      const rawData = JSON.parse(fileContent) as GeoJSONFeatureCollection
+
+      // Transform properties: copy piste:* tags to top-level properties
+      staticPistesData = {
+        type: 'FeatureCollection',
+        features: rawData.features.map(feature => ({
+          ...feature,
+          properties: {
+            ...feature.properties,
+            // Rename piste:difficulty to difficulty
+            difficulty: (feature.properties as any)?.['piste:difficulty'],
+            type: (feature.properties as any)?.['piste:type'],
+            grooming: (feature.properties as any)?.['piste:grooming'],
+            status: (feature.properties as any)?.['piste:status'],
+          }
+        }))
+      }
+
+      console.log(`[Pistes Static] Loaded ${staticPistesData.features.length} features from static file`)
+    } else {
+      console.warn(`[Pistes Static] No static data file found at ${dataPath}`)
+      console.warn(`[Pistes Static] Run: npm run download-pistes`)
+      staticPistesData = { type: 'FeatureCollection', features: [] }
+    }
+  } catch (err: unknown) {
+    console.error(`[Pistes Static] Error loading data:`, err instanceof Error ? err.message : String(err))
+    staticPistesData = { type: 'FeatureCollection', features: [] }
+  }
+}
+
+/**
+ * Filter GeoJSON features by bounding box
+ * Returns only features with coordinates within the bbox
+ */
+function filterPistesByBbox(
+  features: GeoJSONFeature[],
+  south: number,
+  west: number,
+  north: number,
+  east: number
+): GeoJSONFeature[] {
+  return features.filter(feature => {
+    if (feature.geometry.type !== 'LineString') return false
+
+    // Check if any coordinate is within bbox
+    return feature.geometry.coordinates.some(
+      ([lon, lat]) => lon >= west && lon <= east && lat >= south && lat <= north
+    )
+  })
+}
+
 // ── Route Handler ──────────────────────────────────────────────────────────
 
 export async function mapRoute(fastify: FastifyInstance): Promise<void> {
-  // GET /map/pistes — proxy Overpass API avec cache Redis
+  // Load static piste data on route initialization
+  loadStaticPistesData()
+
+  // GET /map/pistes — serve static piste data filtered by bbox
   fastify.withTypeProvider<ZodTypeProvider>().get<{ Querystring: z.infer<typeof bboxSchema> }>(
     '/pistes',
     {
@@ -181,40 +266,40 @@ export async function mapRoute(fastify: FastifyInstance): Promise<void> {
 
       const { south, west, north, east } = parsed.data
 
-      // Cache key
-      const cacheKey = `pistes:${hashBbox(south, west, north, east)}`
-
       try {
-        // Check cache
-        const cached = await fastify.redis.get(cacheKey)
-        if (cached) {
-          fastify.log.info(`Cache hit: ${cacheKey}`)
-          return reply.send(JSON.parse(cached))
+        // Ensure data is loaded
+        if (!staticPistesData) {
+          loadStaticPistesData()
         }
 
-        // Query Overpass API
-        const query = buildOverpassQuery(south, west, north, east)
-        const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
-          method: 'POST',
-          body: query,
-        })
-
-        if (!overpassResponse.ok) {
-          fastify.log.error(`Overpass API error: ${overpassResponse.status}`)
-          return reply.code(503).send({ error: 'Map service temporarily unavailable' })
+        if (!staticPistesData || staticPistesData.features.length === 0) {
+          fastify.log.warn(`[Pistes Static] No static data available`)
+          return reply.send({ type: 'FeatureCollection', features: [] })
         }
 
-        const overpassData = (await overpassResponse.json()) as OverpassResponse
+        // Filter by bbox
+        const startTime = Date.now()
+        const filteredFeatures = filterPistesByBbox(
+          staticPistesData.features,
+          south,
+          west,
+          north,
+          east
+        )
+        const duration = Date.now() - startTime
 
-        // Transform to GeoJSON
-        const geojson = transformOverpassToGeoJSON(overpassData)
+        const response: GeoJSONFeatureCollection = {
+          type: 'FeatureCollection',
+          features: filteredFeatures,
+        }
 
-        // Cache for 30 minutes
-        await fastify.redis.setEx(cacheKey, PISTES_CACHE_TTL_S, JSON.stringify(geojson))
+        fastify.log.info(
+          `[Pistes Static] Bbox (${south.toFixed(2)},${west.toFixed(2)},${north.toFixed(2)},${east.toFixed(2)}): returned ${filteredFeatures.length}/${staticPistesData.features.length} features (${duration}ms)`
+        )
 
-        return reply.send(geojson)
+        return reply.send(response)
       } catch (err: unknown) {
-        fastify.log.error(err)
+        fastify.log.error(`[Pistes] Error: ${err instanceof Error ? err.message : String(err)}`)
         return reply.code(500).send({ error: 'Internal server error' })
       }
     }

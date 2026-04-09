@@ -12,7 +12,8 @@
     "db:migrate": "npx prisma migrate dev",
     "db:deploy": "npx prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "npx prisma studio"
+    "db:studio": "npx prisma studio",
+    "download-pistes": "bash scripts/download-pistes.sh"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",

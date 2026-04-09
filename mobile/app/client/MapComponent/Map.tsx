@@ -4,7 +4,7 @@ import { useSharedValue } from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
 import { useWindowDimensions } from 'react-native'
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet'
-import MapView from 'react-native-maps'
+import MapLibreGL, { type CameraRef } from '@maplibre/maplibre-react-native'
 import { useSocket } from '@/hooks/useSocket'
 import { usePositionsStore } from '@/store/usePositionsStore'
 import { useOrderStore } from '@/store/useOrderStore'
@@ -22,7 +22,7 @@ export function Map(): ReactElement {
   const agents = usePositionsStore((state) => state.agents)
   const activeOrder = useOrderStore((state) => state.activeOrder)
   const bottomSheetRef = useRef<BottomSheet>(null)
-  const mapRef = useRef<MapView>(null)
+  const cameraRef = useRef<CameraRef>(null)
   const animatedPosition = useSharedValue(0)
   const snapPoints = useMemo(() => ['12%', '45%'], [])
 
@@ -34,15 +34,11 @@ export function Map(): ReactElement {
 
   const handleRecenter = () => {
     if (!userLocation) return
-    mapRef.current?.animateToRegion(
-      {
-        latitude: userLocation.lat,
-        longitude: userLocation.lng,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      },
-      500
-    )
+    cameraRef.current?.setCamera({
+      centerCoordinate: [userLocation.lng, userLocation.lat],
+      zoomLevel: 14,
+      animationDuration: 500,
+    })
   }
 
   const isTracking = activeOrder?.status === 'en_route'
@@ -76,7 +72,7 @@ export function Map(): ReactElement {
         agents={agents}
         meetingPoint={meetingPoint}
         onMapReady={(ref) => {
-          mapRef.current = ref.current
+          cameraRef.current = ref.current
         }}
         onRegionChangeComplete={onRegionChange}
       />
